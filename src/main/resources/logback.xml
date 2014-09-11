@@ -1,0 +1,17 @@
+<configuration>
+    <property name="consolePattern"
+              value="%date{ISO8601} %-5level [%logger{36}] [%X{akkaSource}] %msg%n"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${consolePattern}</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="akka" level="INFO"/>
+    <logger name="spray" level="ERROR"/>
+
+    <root level="${log-level:-DEBUG}">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>
