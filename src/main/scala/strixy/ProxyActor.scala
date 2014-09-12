@@ -3,8 +3,8 @@ package strixy
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.io.IO
 import spray.can.Http
-import spray.http.HttpHeaders.Origin
-import spray.http.{HttpHeaders, HttpRequest, SomeOrigins, Uri}
+import spray.http.HttpHeaders.{Host, Origin}
+import spray.http._
 
 object ProxyActor {
   def props() = Props[ProxyActor]()
@@ -41,11 +41,16 @@ class ProxyActor extends Actor with ActorLogging {
       }
       val outgoing = incoming.copy(uri = outgoingUri, headers = headers)
 
-      val origins = SomeOrigins(incoming.header[Origin].get.originList)
+      val origins = SomeOrigins {
+        incoming.header[Origin]
+          .map(_.originList)
+          .getOrElse(Seq(HttpOrigin(incomingUri.scheme, incoming.header[Host].get)))
+      }
 
       val responseActor = context.actorOf(ResponseActor.props(sender(), origins, incoming.method))
       io.tell(outgoing, responseActor)
-    case Http.Closed =>
+    case _: Http.ConnectionClosed =>
+      log.info("Connection closed")
     case msg =>
       log.warning("Unhandled message: {}", msg)
   }
